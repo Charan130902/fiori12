@@ -2,17 +2,23 @@
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
     xmlns:u="sap.ui.unified"
-    xmlns:core="sap.ui.core" displayBlock="true">
+    displayBlock="true">
 
-    <Page id="page" title="Employee Data Management" showHeader="true">
+    <Page id="page" title="Employee Data Management">
 
         <subHeader>
             <Bar>
                 <contentLeft>
-                    <SearchField id="idSearchField" placeholder="Search by ID, Name, Location or Designation..." width="350px" search="onSearchEmployee" liveChange="onSearchEmployee" />
+                    <SearchField
+                        id="idSearchField"
+                        placeholder="Search by ID, Name, Location or Designation..."
+                        width="350px"
+                        search="onSearchEmployee"
+                        liveChange="onSearchEmployee" />
                 </contentLeft>
                 <contentRight>
-                    <Text text="Total Records: {empModel>/rowCount}" class="sapUiSmallMarginEnd" />
+                    <Text text="Total Records: {empModel>/rowCount}"
+                          class="sapUiSmallMarginEnd" />
                 </contentRight>
             </Bar>
         </subHeader>
@@ -21,29 +27,71 @@
             <VBox class="sapUiMediumMargin">
 
                 <!-- Upload Panel -->
-                <Panel headerText="Upload Employee CSV" class="sapUiSmallMarginBottom">
+                <Panel headerText="Upload Employee File"
+                       expandable="true"
+                       expanded="true"
+                       class="sapUiSmallMarginBottom">
                     <content>
                         <VBox class="sapUiSmallMargin">
-                            <HBox alignItems="Center" wrap="Wrap" class="sapUiSmallMarginBottom">
-                                <u:FileUploader id="idFileUploader" fileType="csv" mimeType="text/csv,application/vnd.ms-excel" placeholder="Choose CSV file..." change="onFileChange" width="380px" style="Default" buttonText="Browse" class="sapUiSmallMarginEnd" />
 
-                                <Button text="Upload to Backend" type="Emphasized" icon="sap-icon://upload" press="onUploadExcel" class="sapUiSmallMarginEnd" />
+                            <HBox alignItems="Center"
+                                  wrap="Wrap"
+                                  class="sapUiSmallMarginBottom">
+
+                                <u:FileUploader
+                                    id="idFileUploader"
+                                    placeholder="Choose CSV or Excel file..."
+                                    change="onFileChange"
+                                    width="380px"
+                                    buttonText="Browse"
+                                    class="sapUiSmallMarginEnd" />
+
+                                <Button
+                                    text="Upload to Backend"
+                                    type="Emphasized"
+                                    icon="sap-icon://upload"
+                                    press="onUploadExcel"
+                                    class="sapUiSmallMarginEnd" />
+
                             </HBox>
 
+                            <MessageStrip
+                                text="Supported formats: CSV (.csv) and Excel (.xlsx / .xls) — Headers must be: EMPID, NAME, LOCATION, DESIGNATION"
+                                type="Information"
+                                showIcon="true"
+                                showCloseButton="false" />
 
                         </VBox>
                     </content>
                 </Panel>
 
-                <!-- Action Toolbar -->
+                <!-- Toolbar -->
                 <Toolbar class="sapUiSmallMarginBottom">
                     <ToolbarSpacer />
-                    <Button text="Refresh Data" icon="sap-icon://refresh" press="onFetchData" class="sapUiTinyMarginEnd" />
-                    <Button text="Download Excel" type="Accept" icon="sap-icon://download" press="onDownloadExcel" />
+                    <Button
+                        text="Refresh Data"
+                        icon="sap-icon://refresh"
+                        press="onFetchData"
+                        class="sapUiTinyMarginEnd" />
+                    <Button
+                        text="Download Excel"
+                        type="Accept"
+                        icon="sap-icon://download"
+                        press="onDownloadExcel" />
                 </Toolbar>
 
                 <!-- Employee Table -->
-                <Table id="empTable" items="{empModel>/Employees}" busyIndicatorDelay="0" busy="{empModel>/busy}" noDataText="No employee records found. Upload a CSV or fetch from backend." growing="true" growingThreshold="20" growingScrollToLoad="true" alternateRowColors="true" sticky="ColumnHeaders,HeaderToolbar">
+                <Table
+                    id="empTable"
+                    items="{empModel>/Employees}"
+                    busyIndicatorDelay="0"
+                    busy="{empModel>/busy}"
+                    noDataText="No records found. Upload a file or fetch from backend."
+                    growing="true"
+                    growingThreshold="20"
+                    growingScrollToLoad="true"
+                    alternateRowColors="true"
+                    sticky="ColumnHeaders,HeaderToolbar">
 
                     <headerToolbar>
                         <Toolbar>
@@ -53,16 +101,16 @@
                     </headerToolbar>
 
                     <columns>
-                        <Column width="15%" hAlign="Begin">
+                        <Column width="15%">
                             <Text text="Employee ID" />
                         </Column>
-                        <Column width="25%" hAlign="Begin">
+                        <Column width="25%">
                             <Text text="Name" />
                         </Column>
-                        <Column width="25%" hAlign="Begin">
+                        <Column width="25%">
                             <Text text="Location" />
                         </Column>
-                        <Column width="35%" hAlign="Begin">
+                        <Column width="35%">
                             <Text text="Designation" />
                         </Column>
                     </columns>

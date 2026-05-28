@@ -7,6 +7,21 @@ sap.ui.define([
 ], function (Controller, JSONModel, MessageToast, MessageBox, Spreadsheet) {
     "use strict";
 
+    // Load SheetJS (XLSX parser) dynamically from CDN
+    function loadSheetJS(callback) {
+        if (window.XLSX) {
+            callback();
+            return;
+        }
+        var script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+        script.onload = callback;
+        script.onerror = function () {
+            MessageBox.error("Failed to load XLSX library. Please check your internet connection.");
+        };
+        document.head.appendChild(script);
+    }
+
     return Controller.extend("com.fileupload.controller.dataView", {
 
         onInit: function () {
@@ -16,16 +31,28 @@ sap.ui.define([
                 busy: false,
                 rowCount: 0
             }), "empModel");
+
+            // Preload SheetJS
+            loadSheetJS(function () {
+                console.log("SheetJS loaded successfully.");
+            });
+
             this.onFetchData();
         },
 
+        // ─── File Selection ───────────────────────────────────────────
         onFileChange: function (oEvent) {
             var oFile = oEvent.getParameter("files")[0];
-            if (!oFile) return;
+            if (!oFile) {
+                this._oSelectedFile = null;
+                return;
+            }
 
             var sName = oFile.name.toLowerCase();
-            if (!sName.endsWith(".csv")) {
-                MessageBox.warning("Only CSV files are supported for upload.");
+            var bValid = sName.endsWith(".csv") || sName.endsWith(".xlsx") || sName.endsWith(".xls");
+
+            if (!bValid) {
+                MessageBox.warning("Unsupported file type.\nPlease upload a CSV (.csv) or Excel (.xlsx / .xls) file.");
                 this.byId("idFileUploader").clear();
                 this._oSelectedFile = null;
                 return;
@@ -35,14 +62,26 @@ sap.ui.define([
             MessageToast.show("File selected: " + oFile.name);
         },
 
+        // ─── Upload Button Press ──────────────────────────────────────
         onUploadExcel: function () {
             if (!this._oSelectedFile) {
-                MessageBox.warning("Please select a CSV file first.");
+                MessageBox.warning("Please select a CSV or Excel file first.");
                 return;
             }
 
-            var oReader = new FileReader();
+            var sName = this._oSelectedFile.name.toLowerCase();
+
+            if (sName.endsWith(".csv")) {
+                this._readCSV(this._oSelectedFile);
+            } else if (sName.endsWith(".xlsx") || sName.endsWith(".xls")) {
+                this._readXLSX(this._oSelectedFile);
+            }
+        },
+
+        // ─── Read CSV ─────────────────────────────────────────────────
+        _readCSV: function (oFile) {
             var that = this;
+            var oReader = new FileReader();
 
             oReader.onload = function (e) {
                 var sText = e.target.result;
@@ -52,17 +91,66 @@ sap.ui.define([
                     MessageBox.warning("CSV file is empty or has no valid data rows.");
                     return;
                 }
-
                 that._uploadRowsToBackend(aRows);
             };
 
             oReader.onerror = function () {
-                MessageBox.error("Failed to read the selected file.");
+                MessageBox.error("Failed to read the CSV file.");
             };
 
-            oReader.readAsText(this._oSelectedFile);
+            oReader.readAsText(oFile);
         },
 
+        // ─── Read XLSX / XLS ──────────────────────────────────────────
+        _readXLSX: function (oFile) {
+            var that = this;
+
+            loadSheetJS(function () {
+                var oReader = new FileReader();
+
+                oReader.onload = function (e) {
+                    try {
+                        var data = new Uint8Array(e.target.result);
+                        var workbook = window.XLSX.read(data, { type: "array" });
+
+                        // Read first sheet
+                        var sFirstSheet = workbook.SheetNames[0];
+                        var worksheet = workbook.Sheets[sFirstSheet];
+
+                        // Convert to JSON (header row = keys)
+                        var aRaw = window.XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                        // Normalize keys to uppercase
+                        var aRows = aRaw.map(function (oRow) {
+                            var oNorm = {};
+                            Object.keys(oRow).forEach(function (key) {
+                                oNorm[key.trim().toUpperCase()] = String(oRow[key]).trim();
+                            });
+                            return oNorm;
+                        });
+
+                        if (!aRows || aRows.length === 0) {
+                            MessageBox.warning("Excel file is empty or has no valid data rows.");
+                            return;
+                        }
+
+                        that._uploadRowsToBackend(aRows);
+
+                    } catch (err) {
+                        console.error("XLSX parse error:", err);
+                        MessageBox.error("Failed to parse Excel file.\n\nDetails: " + err.message);
+                    }
+                };
+
+                oReader.onerror = function () {
+                    MessageBox.error("Failed to read the Excel file.");
+                };
+
+                oReader.readAsArrayBuffer(oFile);
+            });
+        },
+
+        // ─── CSV to JSON ──────────────────────────────────────────────
         _csvToJson: function (sCsv) {
             var aLines = sCsv.trim().split(/\r?\n/);
             if (aLines.length < 2) return [];
@@ -74,22 +162,38 @@ sap.ui.define([
             return aLines.slice(1)
                 .filter(function (line) { return line.trim() !== ""; })
                 .map(function (line) {
-                    var aValues = line.split(",");
+                    // Handle quoted values with commas inside
+                    var aValues = [];
+                    var bInQuote = false;
+                    var sCurrent = "";
+                    for (var i = 0; i < line.length; i++) {
+                        var ch = line[i];
+                        if (ch === '"') {
+                            bInQuote = !bInQuote;
+                        } else if (ch === "," && !bInQuote) {
+                            aValues.push(sCurrent.trim());
+                            sCurrent = "";
+                        } else {
+                            sCurrent += ch;
+                        }
+                    }
+                    aValues.push(sCurrent.trim()); // last value
+
                     var oRow = {};
                     aHeaders.forEach(function (h, i) {
-                        oRow[h] = aValues[i] ? aValues[i].trim().replace(/['"]/g, "") : "";
+                        oRow[h] = aValues[i] !== undefined ? aValues[i] : "";
                     });
                     return oRow;
                 });
         },
 
+        // ─── Upload Rows to OData Backend ────────────────────────────
         _uploadRowsToBackend: function (aRows) {
             var oModel = this.getOwnerComponent().getModel();
             var that = this;
             var iSuccess = 0;
             var iFailed = 0;
 
-            // Set busy state
             this.getView().getModel("empModel").setProperty("/busy", true);
 
             aRows.forEach(function (oRow) {
@@ -107,13 +211,14 @@ sap.ui.define([
                     },
                     error: function (oError) {
                         iFailed++;
-                        console.error("Upload error for row:", oPayload, oError);
+                        console.error("Row upload failed:", oPayload, oError);
                         that._checkUploadComplete(iSuccess, iFailed, aRows.length);
                     }
                 });
             });
         },
 
+        // ─── Upload Completion Check ──────────────────────────────────
         _checkUploadComplete: function (iSuccess, iFailed, iTotal) {
             if (iSuccess + iFailed === iTotal) {
                 this.getView().getModel("empModel").setProperty("/busy", false);
@@ -123,15 +228,13 @@ sap.ui.define([
                     { title: "Upload Summary" }
                 );
 
-                // Clear file uploader
                 this.byId("idFileUploader").clear();
                 this._oSelectedFile = null;
-
-                // Refresh table
                 this.onFetchData();
             }
         },
 
+        // ─── Fetch All Data ───────────────────────────────────────────
         onFetchData: function () {
             var oModel = this.getOwnerComponent().getModel();
             var that = this;
@@ -156,14 +259,14 @@ sap.ui.define([
             });
         },
 
+        // ─── Download Excel ───────────────────────────────────────────
         onDownloadExcel: function () {
-            // Get only visible/filtered rows from table binding
             var oTable = this.byId("empTable");
             var oBinding = oTable.getBinding("items");
             var aContexts = oBinding.getCurrentContexts();
 
             if (!aContexts || aContexts.length === 0) {
-                MessageBox.warning("No data available to download. Please fetch data first.");
+                MessageBox.warning("No data available to download.");
                 return;
             }
 
@@ -201,6 +304,7 @@ sap.ui.define([
                 });
         },
 
+        // ─── Search / Filter ──────────────────────────────────────────
         onSearchEmployee: function (oEvent) {
             var sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
             var oTable = this.byId("empTable");
@@ -224,12 +328,10 @@ sap.ui.define([
             }
 
             oBinding.filter(aFilters);
-
-            // Update row count display
-            var iVisible = oBinding.getLength();
-            this.getView().getModel("empModel").setProperty("/rowCount", iVisible);
+            this.getView().getModel("empModel").setProperty("/rowCount", oBinding.getLength());
         },
 
+        // ─── Timestamp Helper ─────────────────────────────────────────
         _getTimestamp: function () {
             var oNow = new Date();
             return oNow.getFullYear()
