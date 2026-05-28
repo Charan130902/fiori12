@@ -7,7 +7,6 @@ sap.ui.define([
 ], function (Controller, JSONModel, MessageToast, MessageBox, Spreadsheet) {
     "use strict";
 
-    // Load SheetJS (XLSX parser) dynamically from CDN
     function loadSheetJS(callback) {
         if (window.XLSX) {
             callback();
@@ -32,7 +31,23 @@ sap.ui.define([
                 rowCount: 0
             }), "empModel");
 
-            // Preload SheetJS
+            // ✅ Patch the native file input's accept attribute after render
+            // This forces the OS file picker to show both CSV and Excel files
+            this.getView().addEventDelegate({
+                onAfterRendering: function () {
+                    var oFileUploader = this.byId("idFileUploader");
+                    if (oFileUploader) {
+                        var oDomRef = oFileUploader.getFocusDomRef();
+                        if (oDomRef) {
+                            oDomRef.setAttribute(
+                                "accept",
+                                ".csv,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                            );
+                        }
+                    }
+                }.bind(this)
+            });
+
             loadSheetJS(function () {
                 console.log("SheetJS loaded successfully.");
             });
@@ -49,10 +64,14 @@ sap.ui.define([
             }
 
             var sName = oFile.name.toLowerCase();
-            var bValid = sName.endsWith(".csv") || sName.endsWith(".xlsx") || sName.endsWith(".xls");
+            var bValid = sName.endsWith(".csv")
+                      || sName.endsWith(".xlsx")
+                      || sName.endsWith(".xls");
 
             if (!bValid) {
-                MessageBox.warning("Unsupported file type.\nPlease upload a CSV (.csv) or Excel (.xlsx / .xls) file.");
+                MessageBox.warning(
+                    "Unsupported file type.\nPlease upload a CSV (.csv) or Excel (.xlsx / .xls) file."
+                );
                 this.byId("idFileUploader").clear();
                 this._oSelectedFile = null;
                 return;
@@ -113,14 +132,11 @@ sap.ui.define([
                         var data = new Uint8Array(e.target.result);
                         var workbook = window.XLSX.read(data, { type: "array" });
 
-                        // Read first sheet
                         var sFirstSheet = workbook.SheetNames[0];
                         var worksheet = workbook.Sheets[sFirstSheet];
 
-                        // Convert to JSON (header row = keys)
                         var aRaw = window.XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-                        // Normalize keys to uppercase
                         var aRows = aRaw.map(function (oRow) {
                             var oNorm = {};
                             Object.keys(oRow).forEach(function (key) {
@@ -162,10 +178,10 @@ sap.ui.define([
             return aLines.slice(1)
                 .filter(function (line) { return line.trim() !== ""; })
                 .map(function (line) {
-                    // Handle quoted values with commas inside
                     var aValues = [];
                     var bInQuote = false;
                     var sCurrent = "";
+
                     for (var i = 0; i < line.length; i++) {
                         var ch = line[i];
                         if (ch === '"') {
@@ -177,7 +193,7 @@ sap.ui.define([
                             sCurrent += ch;
                         }
                     }
-                    aValues.push(sCurrent.trim()); // last value
+                    aValues.push(sCurrent.trim());
 
                     var oRow = {};
                     aHeaders.forEach(function (h, i) {
@@ -187,7 +203,7 @@ sap.ui.define([
                 });
         },
 
-        // ─── Upload Rows to OData Backend ────────────────────────────
+        // ─── Upload Rows to OData Backend ─────────────────────────────
         _uploadRowsToBackend: function (aRows) {
             var oModel = this.getOwnerComponent().getModel();
             var that = this;
@@ -306,7 +322,9 @@ sap.ui.define([
 
         // ─── Search / Filter ──────────────────────────────────────────
         onSearchEmployee: function (oEvent) {
-            var sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
+            var sQuery = oEvent.getParameter("query")
+                      || oEvent.getParameter("newValue")
+                      || "";
             var oTable = this.byId("empTable");
             var oBinding = oTable.getBinding("items");
 
@@ -328,7 +346,8 @@ sap.ui.define([
             }
 
             oBinding.filter(aFilters);
-            this.getView().getModel("empModel").setProperty("/rowCount", oBinding.getLength());
+            this.getView().getModel("empModel")
+                .setProperty("/rowCount", oBinding.getLength());
         },
 
         // ─── Timestamp Helper ─────────────────────────────────────────

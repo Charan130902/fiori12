@@ -1,24 +1,17 @@
 <mvc:View controllerName="com.fileupload.controller.dataView"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
-    xmlns:u="sap.ui.unified"
-    displayBlock="true">
+    xmlns:u="sap.ui.unified" displayBlock="true">
 
     <Page id="page" title="Employee Data Management">
 
         <subHeader>
             <Bar>
                 <contentLeft>
-                    <SearchField
-                        id="idSearchField"
-                        placeholder="Search by ID, Name, Location or Designation..."
-                        width="350px"
-                        search="onSearchEmployee"
-                        liveChange="onSearchEmployee" />
+                    <SearchField id="idSearchField" placeholder="Search by ID, Name, Location or Designation..." width="350px" search="onSearchEmployee" liveChange="onSearchEmployee" />
                 </contentLeft>
                 <contentRight>
-                    <Text text="Total Records: {empModel>/rowCount}"
-                          class="sapUiSmallMarginEnd" />
+                    <Text text="Total Records: {empModel>/rowCount}" class="sapUiSmallMarginEnd" />
                 </contentRight>
             </Bar>
         </subHeader>
@@ -27,34 +20,20 @@
             <VBox class="sapUiMediumMargin">
 
                 <!-- Upload Panel -->
-                <Panel headerText="Upload Employee File"
-                       
-                       class="sapUiSmallMarginBottom">
+                <Panel headerText="Upload Employee File" class="sapUiSmallMarginBottom">
                     <content>
                         <VBox class="sapUiSmallMargin">
 
-                            <HBox alignItems="Center"
-                                  wrap="Wrap"
-                                  class="sapUiSmallMarginBottom">
+                            <HBox alignItems="Center" wrap="Wrap" class="sapUiSmallMarginBottom">
 
-                                <u:FileUploader
-                                    id="idFileUploader"
-                                    placeholder="Choose CSV or Excel file..."
-                                    change="onFileChange"
-                                    width="380px"
-                                    buttonText="Browse"
-                                    class="sapUiSmallMarginEnd" />
+                                <!-- ✅ fileType + mimeType covers all CSV/Excel variants -->
+                                <u:FileUploader id="idFileUploader" placeholder="Choose CSV or Excel file..." change="onFileChange" width="380px" buttonText="Browse" fileType="csv,xlsx,xls" mimeType="text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" class="sapUiSmallMarginEnd" />
 
-                                <Button
-                                    text="Upload to Backend"
-                                    type="Emphasized"
-                                    icon="sap-icon://upload"
-                                    press="onUploadExcel"
-                                    class="sapUiSmallMarginEnd" />
+                                <Button text="Upload to Backend" type="Emphasized" icon="sap-icon://upload" press="onUploadExcel" class="sapUiSmallMarginEnd" />
 
                             </HBox>
 
-                           
+
 
                         </VBox>
                     </content>
@@ -63,30 +42,12 @@
                 <!-- Toolbar -->
                 <Toolbar class="sapUiSmallMarginBottom">
                     <ToolbarSpacer />
-                    <Button
-                        text="Refresh Data"
-                        icon="sap-icon://refresh"
-                        press="onFetchData"
-                        class="sapUiTinyMarginEnd" />
-                    <Button
-                        text="Download Excel"
-                        type="Accept"
-                        icon="sap-icon://download"
-                        press="onDownloadExcel" />
+                    <Button text="Refresh Data" icon="sap-icon://refresh" press="onFetchData" class="sapUiTinyMarginEnd" />
+                    <Button text="Download Excel" type="Accept" icon="sap-icon://download" press="onDownloadExcel" />
                 </Toolbar>
 
                 <!-- Employee Table -->
-                <Table
-                    id="empTable"
-                    items="{empModel>/Employees}"
-                    busyIndicatorDelay="0"
-                    busy="{empModel>/busy}"
-                    noDataText="No records found. Upload a file or fetch from backend."
-                    growing="true"
-                    growingThreshold="20"
-                    growingScrollToLoad="true"
-                    alternateRowColors="true"
-                    sticky="ColumnHeaders,HeaderToolbar">
+                <Table id="empTable" items="{empModel>/Employees}" busyIndicatorDelay="0" busy="{empModel>/busy}" noDataText="No records found. Upload a file or fetch from backend." growing="true" growingThreshold="20" growingScrollToLoad="true" alternateRowColors="true" sticky="ColumnHeaders,HeaderToolbar">
 
                     <headerToolbar>
                         <Toolbar>
