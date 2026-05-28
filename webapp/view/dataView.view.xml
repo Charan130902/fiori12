@@ -28,8 +28,7 @@
 
                 <!-- Upload Panel -->
                 <Panel headerText="Upload Employee File"
-                       expandable="true"
-                       expanded="true"
+                       
                        class="sapUiSmallMarginBottom">
                     <content>
                         <VBox class="sapUiSmallMargin">
@@ -55,11 +54,7 @@
 
                             </HBox>
 
-                            <MessageStrip
-                                text="Supported formats: CSV (.csv) and Excel (.xlsx / .xls) — Headers must be: EMPID, NAME, LOCATION, DESIGNATION"
-                                type="Information"
-                                showIcon="true"
-                                showCloseButton="false" />
+                           
 
                         </VBox>
                     </content>
