@@ -1,0 +1,87 @@
+<mvc:View controllerName="com.fileupload.controller.dataView"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:u="sap.ui.unified"
+    xmlns:core="sap.ui.core" displayBlock="true">
+
+    <Page id="page" title="Employee Data Management" showHeader="true">
+
+        <subHeader>
+            <Bar>
+                <contentLeft>
+                    <SearchField id="idSearchField" placeholder="Search by ID, Name, Location or Designation..." width="350px" search="onSearchEmployee" liveChange="onSearchEmployee" />
+                </contentLeft>
+                <contentRight>
+                    <Text text="Total Records: {empModel>/rowCount}" class="sapUiSmallMarginEnd" />
+                </contentRight>
+            </Bar>
+        </subHeader>
+
+        <content>
+            <VBox class="sapUiMediumMargin">
+
+                <!-- Upload Panel -->
+                <Panel headerText="Upload Employee CSV" class="sapUiSmallMarginBottom">
+                    <content>
+                        <VBox class="sapUiSmallMargin">
+                            <HBox alignItems="Center" wrap="Wrap" class="sapUiSmallMarginBottom">
+                                <u:FileUploader id="idFileUploader" fileType="csv" mimeType="text/csv,application/vnd.ms-excel" placeholder="Choose CSV file..." change="onFileChange" width="380px" style="Default" buttonText="Browse" class="sapUiSmallMarginEnd" />
+
+                                <Button text="Upload to Backend" type="Emphasized" icon="sap-icon://upload" press="onUploadExcel" class="sapUiSmallMarginEnd" />
+                            </HBox>
+
+
+                        </VBox>
+                    </content>
+                </Panel>
+
+                <!-- Action Toolbar -->
+                <Toolbar class="sapUiSmallMarginBottom">
+                    <ToolbarSpacer />
+                    <Button text="Refresh Data" icon="sap-icon://refresh" press="onFetchData" class="sapUiTinyMarginEnd" />
+                    <Button text="Download Excel" type="Accept" icon="sap-icon://download" press="onDownloadExcel" />
+                </Toolbar>
+
+                <!-- Employee Table -->
+                <Table id="empTable" items="{empModel>/Employees}" busyIndicatorDelay="0" busy="{empModel>/busy}" noDataText="No employee records found. Upload a CSV or fetch from backend." growing="true" growingThreshold="20" growingScrollToLoad="true" alternateRowColors="true" sticky="ColumnHeaders,HeaderToolbar">
+
+                    <headerToolbar>
+                        <Toolbar>
+                            <Title text="Employee Records" level="H3" />
+                            <ToolbarSpacer />
+                        </Toolbar>
+                    </headerToolbar>
+
+                    <columns>
+                        <Column width="15%" hAlign="Begin">
+                            <Text text="Employee ID" />
+                        </Column>
+                        <Column width="25%" hAlign="Begin">
+                            <Text text="Name" />
+                        </Column>
+                        <Column width="25%" hAlign="Begin">
+                            <Text text="Location" />
+                        </Column>
+                        <Column width="35%" hAlign="Begin">
+                            <Text text="Designation" />
+                        </Column>
+                    </columns>
+
+                    <items>
+                        <ColumnListItem vAlign="Middle">
+                            <cells>
+                                <ObjectIdentifier title="{empModel>EMPID}" />
+                                <Text text="{empModel>NAME}" />
+                                <Text text="{empModel>LOCATION}" />
+                                <Text text="{empModel>DESIGNATION}" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+
+                </Table>
+
+            </VBox>
+        </content>
+
+    </Page>
+</mvc:View>
