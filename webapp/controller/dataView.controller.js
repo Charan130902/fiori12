@@ -10,22 +10,21 @@ sap.ui.define([
 
         onInit: function () {
 
-            // Model to store uploaded file in frontend
             this.getView().setModel(new JSONModel({
                 uploadedFile: null
             }), "empModel");
 
         },
 
-        // 📥 FILE UPLOAD (PDF ONLY)
+        // 📥 Upload PDF
         onFileChange: function (oEvent) {
+
             var oFile = oEvent.getParameter("files")[0];
 
             if (!oFile) {
                 return;
             }
 
-            // Validate PDF
             if (oFile.type !== "application/pdf") {
                 MessageBox.warning("Only PDF files are allowed.");
                 this.byId("idFileUploader").clear();
@@ -37,27 +36,22 @@ sap.ui.define([
 
             reader.onload = function (e) {
 
-                var oFileData = {
+                var fileData = {
                     name: oFile.name,
-                    type: oFile.type,
-                    size: oFile.size,
-                    data: e.target.result   // base64 PDF
+                    data: e.target.result // base64
                 };
 
-                that.getView().getModel("empModel")
-                    .setProperty("/uploadedFile", oFileData);
+                that.getView()
+                    .getModel("empModel")
+                    .setProperty("/uploadedFile", fileData);
 
                 MessageToast.show("PDF uploaded successfully");
             };
 
-            reader.onerror = function () {
-                MessageBox.error("Failed to read PDF file");
-            };
-
-            reader.readAsDataURL(oFile); // important for preview
+            reader.readAsDataURL(oFile);
         },
 
-        // 👁️ PREVIEW PDF
+        // 👁️ Preview PDF (INLINE)
         onPreviewPDF: function () {
 
             var oFile = this.getView()
@@ -69,15 +63,19 @@ sap.ui.define([
                 return;
             }
 
-            var win = window.open();
-            win.document.write(
-                "<iframe width='100%' height='100%' src='" +
+            this.byId("noPdfText").setVisible(false);
+
+            var sHtml =
+                "<iframe width='100%' height='650px' style='border:none;' src='" +
                 oFile.data +
-                "'></iframe>"
-            );
+                "'></iframe>";
+
+            this.byId("pdfFrame").setContent(sHtml);
+
+            MessageToast.show("PDF loaded in preview area");
         },
 
-        // ⬇️ DOWNLOAD PDF
+        // ⬇️ Download PDF
         onDownloadPDF: function () {
 
             var oFile = this.getView()
@@ -85,7 +83,7 @@ sap.ui.define([
                 .getProperty("/uploadedFile");
 
             if (!oFile) {
-                MessageBox.warning("No PDF available to download.");
+                MessageBox.warning("No PDF available.");
                 return;
             }
 
@@ -93,7 +91,6 @@ sap.ui.define([
             link.href = oFile.data;
             link.download = oFile.name || "file.pdf";
             link.click();
-
         }
 
     });

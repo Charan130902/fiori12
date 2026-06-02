@@ -1,48 +1,77 @@
-<mvc:View controllerName="com.fileupload.controller.dataView"
+<mvc:View
+    controllerName="com.fileupload.controller.dataView"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
     xmlns:u="sap.ui.unified"
+    xmlns:core="sap.ui.core"
     displayBlock="true">
 
     <Page id="page" title="PDF File Management">
 
         <content>
+
             <VBox class="sapUiMediumMargin">
 
-                <!-- Upload Panel -->
+                <!-- UPLOAD PANEL -->
                 <Panel headerText="Upload PDF File" class="sapUiSmallMarginBottom">
+
                     <content>
+
+                        <HBox alignItems="Center" wrap="Wrap">
+
+                            <u:FileUploader
+                                id="idFileUploader"
+                                placeholder="Choose PDF file..."
+                                change="onFileChange"
+                                width="380px"
+                                buttonText="Browse"
+                                fileType="pdf"
+                                mimeType="application/pdf"
+                                class="sapUiSmallMarginEnd" />
+
+                            <Button
+                                text="Preview PDF"
+                                icon="sap-icon://pdf-attachment"
+                                press="onPreviewPDF"
+                                class="sapUiSmallMarginEnd" />
+
+                            <Button
+                                text="Download PDF"
+                                type="Emphasized"
+                                icon="sap-icon://download"
+                                press="onDownloadPDF" />
+
+                        </HBox>
+
+                    </content>
+
+                </Panel>
+
+                <!-- 📄 PREVIEW SECTION (INLINE) -->
+                <Panel headerText="PDF Preview" class="sapUiSmallMarginTop">
+
+                    <content>
+
                         <VBox class="sapUiSmallMargin">
 
-                            <HBox alignItems="Center" wrap="Wrap">
+                            <Text
+                                id="noPdfText"
+                                text="No PDF selected for preview" />
 
-                                <u:FileUploader
-                                    id="idFileUploader"
-                                    placeholder="Choose PDF file..."
-                                    change="onFileChange"
-                                    width="380px"
-                                    buttonText="Browse"
-                                    fileType="pdf"
-                                    mimeType="application/pdf"
-                                    class="sapUiSmallMarginEnd"/>
-
-                                <Button text="Preview PDF"
-                                    icon="sap-icon://pdf-attachment"
-                                    press="onPreviewPDF"
-                                    class="sapUiSmallMarginEnd"/>
-
-                                <Button text="Download PDF"
-                                    type="Emphasized"
-                                    icon="sap-icon://download"
-                                    press="onDownloadPDF"/>
-                            </HBox>
+                            <core:HTML
+                                id="pdfFrame"
+                                content="" />
 
                         </VBox>
+
                     </content>
+
                 </Panel>
 
             </VBox>
+
         </content>
 
     </Page>
+
 </mvc:View>
